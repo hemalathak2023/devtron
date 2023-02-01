@@ -293,7 +293,7 @@ func (impl *K8sApplicationServiceImpl) getManifestsByBatch(ctx context.Context, 
 }
 
 func (impl *K8sApplicationServiceImpl) GetResource(ctx context.Context, request *ResourceRequestBean) (*application.ManifestResponse, error) {
-	clusterId := request.ClusterId
+	clusterId := request.AppIdentifier.ClusterId
 	//getting rest config by clusterId
 	restConfig, err := impl.GetRestConfigByClusterId(ctx, clusterId)
 	if err != nil {
@@ -370,10 +370,11 @@ func (impl *K8sApplicationServiceImpl) DeleteResource(ctx context.Context, reque
 		impl.logger.Errorw("error in deleting resource", "err", err, "request", request)
 		return nil, err
 	}
-	saveAuditLogsErr := impl.K8sResourceHistoryService.SaveHelmAppsResourceHistory(request.AppIdentifier, request.K8sRequest, userId, "delete")
-
-	if saveAuditLogsErr != nil {
-		impl.logger.Errorw("error in saving audit logs for delete resource request", "err", err)
+	if request.AppIdentifier != nil {
+		saveAuditLogsErr := impl.K8sResourceHistoryService.SaveHelmAppsResourceHistory(request.AppIdentifier, request.K8sRequest, userId, "delete")
+		if saveAuditLogsErr != nil {
+			impl.logger.Errorw("error in saving audit logs for delete resource request", "err", err)
+		}
 	}
 	return resp, nil
 }
